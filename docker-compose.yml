@@ -1,0 +1,19 @@
+version: '3'
+services:
+  brat:
+    image: cassj/brat
+    container_name: brat
+    build: .
+    ports:
+      - "8001:80"
+      - "2222:22"
+    volumes:
+      - bratdata:/bratdata
+      - bratcfg:/bratcfg
+    environment:
+      BRAT_USERNAME: "admin"
+      BRAT_PASSWORD: "admin"
+volumes:
+  bratdata:
+  bratcfg:
+

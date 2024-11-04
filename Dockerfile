@@ -9,11 +9,15 @@ ARG USERS_CFG=users.json
 RUN apt-get update
 RUN apt-get install -y curl vim sudo wget rsync
 RUN apt-get install -y apache2
-RUN apt-get install -y python
+RUN apt-get install -y python3
 RUN apt-get install -y supervisor
 RUN apt-get install -y openssh-server  # Install SSH server
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Configure SSH to allow root login and password authentication
+RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
+    echo "PasswordAuthentication yes" >> /etc/ssh/sshd_config
 
 # Set up SSH
 RUN mkdir /var/run/sshd  # Required directory for SSH
@@ -21,15 +25,16 @@ RUN echo 'root:password' | chpasswd  # Password should be replaced with sth more
 
 # Fetch  brat
 RUN mkdir /var/www/brat
-RUN curl http://weaver.nlplab.org/~brat/releases/brat-v1.3_Crunchy_Frog.tar.gz > /var/www/brat/brat-v1.3_Crunchy_Frog.tar.gz 
-RUN cd /var/www/brat && tar -xvzf brat-v1.3_Crunchy_Frog.tar.gz
+RUN curl -L -o /var/www/brat/brat-1.3p1.tar.gz https://github.com/nlplab/brat/archive/refs/tags/v1.3p1.tar.gz && \
+    tar -xvzf /var/www/brat/brat-1.3p1.tar.gz -C /var/www/brat && \
+    rm /var/www/brat/brat-1.3p1.tar.gz
 
 # create a symlink so users can mount their data volume at /bratdata rather than the full path
 RUN mkdir /bratdata && mkdir /bratcfg
 RUN chown -R www-data:www-data /bratdata /bratcfg 
 RUN chmod o-rwx /bratdata /bratcfg
-RUN ln -s /bratdata /var/www/brat/brat-v1.3_Crunchy_Frog/data
-RUN ln -s /bratcfg /var/www/brat/brat-v1.3_Crunchy_Frog/cfg 
+RUN ln -s /bratdata /var/www/brat/brat-1.3p1/data
+RUN ln -s /bratcfg /var/www/brat/brat-1.3p1/cfg
 
 # And make that location a volume
 VOLUME /bratdata
@@ -39,12 +44,12 @@ ADD brat_install_wrapper.sh /usr/bin/brat_install_wrapper.sh
 RUN chmod +x /usr/bin/brat_install_wrapper.sh
 
 # Make sure apache can access it
-RUN chown -R www-data:www-data /var/www/brat/brat-v1.3_Crunchy_Frog/
+RUN chown -R www-data:www-data /var/www/brat/brat-1.3p1/
 
 ADD 000-default.conf /etc/apache2/sites-available/000-default.conf
 
 # add the user patching script
-ADD user_patch.py /var/www/brat/brat-v1.3_Crunchy_Frog/user_patch.py
+ADD user_patch.py /var/www/brat/brat-1.3p1/user_patch.py
 
 # Enable cgi
 RUN a2enmod cgi
@@ -56,7 +61,8 @@ RUN mkdir -p /var/log/supervisor
 ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # Open SSH port
-EXPOSE 80 22  # Expose port 22 for SSH
+EXPOSE 80 22
+# Expose port 22 for SSH
 
 CMD ["/usr/bin/supervisord"]
 
