@@ -1,5 +1,5 @@
 # start from a base ubuntu image
-FROM ubuntu
+FROM ubuntu:18.04
 MAINTAINER Cass Johnston <cassjohnston@gmail.com>
 
 # set users cfg file
@@ -9,11 +9,13 @@ ARG USERS_CFG=users.json
 RUN apt-get update
 RUN apt-get install -y curl vim sudo wget rsync
 RUN apt-get install -y apache2
-RUN apt-get install -y python3
+RUN apt-get install -y python2.7 python2.7-dev && \
+    ln -s /usr/bin/python2.7 /usr/bin/python
 RUN apt-get install -y supervisor
 RUN apt-get install -y openssh-server  # Install SSH server
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
 
 # Configure SSH to allow root login and password authentication
 RUN echo "PermitRootLogin yes" >> /etc/ssh/sshd_config && \
@@ -46,12 +48,13 @@ RUN chmod +x /usr/bin/brat_install_wrapper.sh
 # Make sure apache can access it
 RUN chown -R www-data:www-data /var/www/brat/brat-1.3p1/
 
-ADD 000-default.conf /etc/apache2/sites-available/000-default.conf
+COPY 000-default.conf /etc/apache2/sites-available/000-default.conf
 
 # add the user patching script
 ADD user_patch.py /var/www/brat/brat-1.3p1/user_patch.py
 
 # Enable cgi
+RUN a2enmod rewrite
 RUN a2enmod cgi
 
 # We can't use apachectl as an entrypoint because it starts apache and then exits, taking your container with it.

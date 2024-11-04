@@ -13,6 +13,7 @@ services:
     environment:
       BRAT_USERNAME: "admin"
       BRAT_PASSWORD: "admin"
+      BRAT_EMAIL: "admin@mail.com"
 volumes:
   bratdata:
   bratcfg:
