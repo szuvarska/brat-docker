@@ -11,8 +11,13 @@ RUN apt-get install -y curl vim sudo wget rsync
 RUN apt-get install -y apache2
 RUN apt-get install -y python
 RUN apt-get install -y supervisor
+RUN apt-get install -y openssh-server  # Install SSH server
 RUN apt-get clean
 RUN rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Set up SSH
+RUN mkdir /var/run/sshd  # Required directory for SSH
+RUN echo 'root:password' | chpasswd  # Password should be replaced with sth more secure
 
 # Fetch  brat
 RUN mkdir /var/www/brat
@@ -44,13 +49,14 @@ ADD user_patch.py /var/www/brat/brat-v1.3_Crunchy_Frog/user_patch.py
 # Enable cgi
 RUN a2enmod cgi
 
-EXPOSE 80
-
-# We can't use apachectl as an entrypoint because it starts apache and then exits, taking your container with it. 
+# We can't use apachectl as an entrypoint because it starts apache and then exits, taking your container with it.
 # Instead, use supervisor to monitor the apache process
 RUN mkdir -p /var/log/supervisor
 
-ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf 
+ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Open SSH port
+EXPOSE 80 22  # Expose port 22 for SSH
 
 CMD ["/usr/bin/supervisord"]
 
