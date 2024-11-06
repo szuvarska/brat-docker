@@ -1,7 +1,7 @@
 version: '3'
 services:
   brat:
-    image: cassj/brat
+    image: szuvarska/brat
     container_name: brat
     build: .
     ports:

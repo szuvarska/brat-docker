@@ -1,6 +1,6 @@
 # start from a base ubuntu image
 FROM ubuntu:18.04
-MAINTAINER Cass Johnston <cassjohnston@gmail.com>
+MAINTAINER Marta Szuwarska <martaszuwarska@gmail.com>
 
 # set users cfg file
 ARG USERS_CFG=users.json
